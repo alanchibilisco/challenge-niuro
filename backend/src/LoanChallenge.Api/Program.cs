@@ -10,6 +10,7 @@ using Microsoft.Extensions.Options;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddOpenApi();
 
 builder.Services.Configure<BlacklistOptions>(builder.Configuration.GetSection("Blacklist"));
 builder.Services.Configure<ExternalServiceOptions>(builder.Configuration.GetSection("ExternalService"));
