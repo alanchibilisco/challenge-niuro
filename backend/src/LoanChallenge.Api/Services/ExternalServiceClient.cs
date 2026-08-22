@@ -1,4 +1,6 @@
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace LoanChallenge.Api.Services;
 
@@ -9,11 +11,30 @@ namespace LoanChallenge.Api.Services;
 /// </summary>
 public sealed class ExternalServiceClient(HttpClient http)
 {
-    public async Task SendCustomerUpdateAsync(string ssn, string payloadJson, CancellationToken cancellationToken)
+    public async Task<ExternalServiceResponse> SendCustomerUpdateAsync(string ssn, string payloadJson, CancellationToken cancellationToken)
     {
-        var url = $"api/customers/{Uri.EscapeDataString(ssn)}";
-        using var content = new StringContent(payloadJson, Encoding.UTF8, "application/json");
+        string url = $"api/customers/{Uri.EscapeDataString(ssn)}";
+        using StringContent content = new StringContent(payloadJson, Encoding.UTF8, "application/json");
         HttpResponseMessage response = await http.PutAsync(url, content, cancellationToken);
         response.EnsureSuccessStatusCode();
+        string stringContent=await response.Content.ReadAsStringAsync();
+        ExternalServiceResponse? externalServiceResponse=JsonSerializer.Deserialize<ExternalServiceResponse>(stringContent);
+        
+        if (externalServiceResponse==null)
+        {
+            throw new Exception("No se pudo deserializar la respuesta del servicio externo.");
+        }
+
+        return externalServiceResponse;
     }
+}
+
+public sealed class ExternalServiceResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+    [JsonPropertyName("ssn")]
+    public required string Ssn { get; set; }
+    [JsonPropertyName("operation")]
+    public required string Operation { get; set; }
 }

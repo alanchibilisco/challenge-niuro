@@ -1,16 +1,16 @@
 using System.Collections.Concurrent;
 
-var builder = WebApplication.CreateBuilder(args);
-var app = builder.Build();
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+WebApplication app = builder.Build();
 
 // Simulación del servicio externo: almacena los clientes recibidos en memoria.
 // El SSN es la clave natural: un PUT crea el registro si no existe y lo actualiza
 // si ya existe, lo que hace que los reintentos del backend sean idempotentes.
-var customers = new ConcurrentDictionary<string, ExternalCustomer>(StringComparer.Ordinal);
+ConcurrentDictionary<string, ExternalCustomer> customers = new ConcurrentDictionary<string, ExternalCustomer>(StringComparer.Ordinal);
 
 app.MapPut("/api/customers/{ssn}", (string ssn, ExternalCustomerPayload payload) =>
 {
-    var customer = new ExternalCustomer(
+    ExternalCustomer customer = new ExternalCustomer(
         Ssn: ssn,
         FirstName: payload.FirstName,
         LastName: payload.LastName,
@@ -21,18 +21,20 @@ app.MapPut("/api/customers/{ssn}", (string ssn, ExternalCustomerPayload payload)
         IsNewCustomer: payload.IsNewCustomer,
         UpdatedAt: DateTime.UtcNow);
 
-    var created = customers.TryAdd(ssn, customer);
+    bool created = customers.TryAdd(ssn, customer);
+
     if (!created)
     {
         customers[ssn] = customer;
     }
 
-    var operation = created ? "ALTA" : "ACTUALIZACION";
+    string operation = created ? "ALTA" : "ACTUALIZACIÓN";
+
     app.Logger.LogInformation(
         "Recibida {Operation} para SSN {Ssn}: {FirstName} {LastName} - {CompanyName} - ${RequestedAmount}",
         operation, ssn, customer.FirstName, customer.LastName, customer.CompanyName, customer.RequestedAmount);
 
-    return Results.Ok(new { ssn, created });
+    return Results.Ok(new ExternalServiceResponse(Success: true, Ssn: ssn, Operation: operation));
 });
 
 app.MapGet("/api/customers", () =>
@@ -40,7 +42,8 @@ app.MapGet("/api/customers", () =>
 
 app.Run();
 
-public record ExternalCustomerPayload(
+public record ExternalCustomerPayload
+(
     string? FirstName,
     string? LastName,
     string? Address,
@@ -48,9 +51,11 @@ public record ExternalCustomerPayload(
     string? CompanyName,
     string? Ssn,
     decimal? RequestedAmount,
-    bool IsNewCustomer);
+    bool IsNewCustomer
+);
 
-public record ExternalCustomer(
+public record ExternalCustomer
+(
     string Ssn,
     string? FirstName,
     string? LastName,
@@ -59,4 +64,12 @@ public record ExternalCustomer(
     string? CompanyName,
     decimal? RequestedAmount,
     bool IsNewCustomer,
-    DateTime UpdatedAt);
+    DateTime UpdatedAt
+);
+
+public record ExternalServiceResponse
+(
+    bool Success,
+    string Ssn,
+    string Operation
+);
