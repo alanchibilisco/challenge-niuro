@@ -7,7 +7,7 @@ using LoanChallenge.Core.Domain.Rules;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -32,7 +32,7 @@ builder.Services.AddScoped<LoanApplicationService>();
 
 builder.Services.AddHttpClient<ExternalServiceClient>((sp, client) =>
 {
-    var options = sp.GetRequiredService<IOptions<ExternalServiceOptions>>().Value;
+    ExternalServiceOptions options = sp.GetRequiredService<IOptions<ExternalServiceOptions>>().Value;
     client.BaseAddress = new Uri(options.BaseUrl);
 });
 
@@ -44,19 +44,19 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowAnyMethod()));
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 #if DEBUG
-using (var scope = app.Services.CreateScope())
+using (IServiceScope scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<LoanDbContext>();
+    LoanDbContext db = scope.ServiceProvider.GetRequiredService<LoanDbContext>();
 
     db.Database.EnsureDeleted();
     db.Database.EnsureCreated();
 }
 #endif
 
-using (var scope = app.Services.CreateScope())
+using (IServiceScope scope = app.Services.CreateScope())
 {
     scope.ServiceProvider.GetRequiredService<LoanDbContext>().Database.EnsureCreated();
 }

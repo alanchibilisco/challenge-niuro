@@ -10,7 +10,7 @@ public sealed class LoanRulesEngine(IEnumerable<ILoanDenialRule> denialRules)
 {
     public RuleDecision Decide(LoanRequest request)
     {
-        foreach (var rule in denialRules)
+        foreach (ILoanDenialRule rule in denialRules)
         {
             if (rule.AppliesTo(request))
             {

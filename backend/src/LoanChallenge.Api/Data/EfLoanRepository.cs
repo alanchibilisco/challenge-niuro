@@ -1,6 +1,7 @@
 using LoanChallenge.Core.Application;
 using LoanChallenge.Core.Domain;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace LoanChallenge.Api.Data;
 
@@ -55,7 +56,7 @@ public class EfLoanRepository(LoanDbContext db) : ILoanRepository
 
     public async Task ExecuteTransactionAsync(Func<Task> action, CancellationToken cancellationToken)
     {
-        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        await using IDbContextTransaction transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             await action();

@@ -27,7 +27,7 @@ public sealed class OutboxProcessor(
             return;
         }
 
-        var pollInterval = TimeSpan.FromSeconds(options.Value.PollIntervalSeconds);
+        TimeSpan pollInterval = TimeSpan.FromSeconds(options.Value.PollIntervalSeconds);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -53,23 +53,29 @@ public sealed class OutboxProcessor(
 
     private async Task ProcessPendingMessagesAsync(CancellationToken stoppingToken)
     {
-        await using var scope = scopeFactory.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<LoanDbContext>();
+        await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
+        LoanDbContext db = scope.ServiceProvider.GetRequiredService<LoanDbContext>();
 
-        var pending = await db.OutboxMessages
+        List<OutboxMessage> pending = await db.OutboxMessages
             .Where(m => m.Status == OutboxStatuses.Pending)
             .OrderBy(m => m.Id)
             .Take(20)
             .ToListAsync(stoppingToken);
 
-        foreach (var message in pending)
+        foreach (OutboxMessage message in pending)
         {
             try
             {
-                await client.SendCustomerUpdateAsync(message.Ssn, message.Payload, stoppingToken);
-                message.Status = OutboxStatuses.Processed;
-                message.ProcessedAt = DateTime.UtcNow;
-                logger.LogInformation("Evento outbox {OutboxId} enviado al servicio externo (SSN {Ssn}).", message.Id, message.Ssn);
+                ExternalServiceResponse externalServiceResponse = await client.SendCustomerUpdateAsync(message.Ssn, message.Payload, stoppingToken);
+
+                if (externalServiceResponse.Success)
+                {
+                    message.Status = OutboxStatuses.Processed;
+                    message.Attempts++;
+                    message.ProcessedAt = DateTime.UtcNow;
+                    logger.LogInformation("Evento outbox {OutboxId} enviado al servicio externo (SSN {Ssn}).", message.Id, message.Ssn);
+                }
+
             }
             catch (Exception ex)
             {

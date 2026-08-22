@@ -18,8 +18,8 @@ public sealed class LoanRequestDto
     public string Address { get; set; } = "";
 
     [Required]
-    [StringLength(2, MinimumLength = 2)]
-    [RegularExpression("^[A-Z]{2}$")]
+    [StringLength(50, MinimumLength = 2)]
+    [RegularExpression(@"^[A-Za-z ]{2,50}$")]
     public string State { get; set; } = "";
 
     [Required]
@@ -30,7 +30,7 @@ public sealed class LoanRequestDto
     public decimal RequestedAmount { get; set; }
 
     [Required]
-    [RegularExpression(@"^\d{3}-?\d{2}-?\d{4}$", ErrorMessage = "El SSN debe tener 9 dígitos (p. ej. 123-45-6789).")]
+    [RegularExpression(@"^\d{8,9}$", ErrorMessage = "El SSN debe tener entre 8 y 9 dígitos.")]
     public string Ssn { get; set; } = "";
 
     public LoanRequest ToRequest() => new(
