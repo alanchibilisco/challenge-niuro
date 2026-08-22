@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "V0tNyPJszqE=",
+  "success": true,
+  "projectFilePath": "/home/alan/loan-challenge/backend/src/LoanChallenge.Core/LoanChallenge.Core.csproj",
+  "expectedPackageFiles": [
+    "/home/alan/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/10.0.11/microsoft.extensions.dependencyinjection.abstractions.10.0.11.nupkg.sha512",
+    "/home/alan/.nuget/packages/microsoft.extensions.logging.abstractions/10.0.11/microsoft.extensions.logging.abstractions.10.0.11.nupkg.sha512"
+  ],
+  "logs": []
+}
