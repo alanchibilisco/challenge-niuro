@@ -45,6 +45,16 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+#if DEBUG
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<LoanDbContext>();
+
+    db.Database.EnsureDeleted();
+    db.Database.EnsureCreated();
+}
+#endif
+
 using (var scope = app.Services.CreateScope())
 {
     scope.ServiceProvider.GetRequiredService<LoanDbContext>().Database.EnsureCreated();
