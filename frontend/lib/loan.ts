@@ -17,25 +17,108 @@ export type SubmitResult =
     }
   | { status: "Denied"; denialCode: string; denialReason: string };
 
+ export type FormSubmitEvent = NonNullable<
+  React.ComponentProps<"form">["onSubmit"]
+> extends (event: infer E) => unknown
+  ? E
+  : never;
+
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5000";
 
-export const US_STATES = [
-  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA",
-  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA",
-  "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY",
-  "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX",
-  "UT", "VT", "VA", "WA", "WV", "WI", "WY",
-] as const;
-
 export function formatSsn(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 9);
-  const parts = [digits.slice(0, 3), digits.slice(3, 5), digits.slice(5, 9)];
-  return parts.filter(Boolean).join("-");
+  return value.replace(/\D/g, "").slice(0, 9);
+}
+
+export function formatAmount(value: string | number): number {
+  if (typeof value === "number") {
+    return value;
+  }
+
+  const normalized = value.trim();
+
+  if (!normalized) {
+    return 0;
+  }
+
+  const lastComma = normalized.lastIndexOf(",");
+  const lastDot = normalized.lastIndexOf(".");
+
+  // Si ambos existen, el último es el separador decimal
+  if (lastComma !== -1 && lastDot !== -1) {
+    if (lastComma > lastDot) {
+      // 1.234,99
+      return Number(normalized.replace(/\./g, "").replace(",", "."));
+    } else {
+      // 1,234.99
+      return Number(normalized.replace(/,/g, ""));
+    }
+  }
+
+  // Solo coma: 1234,99
+  if (lastComma !== -1) {
+    return Number(normalized.replace(",", "."));
+  }
+
+  // Solo punto: 1234.99 o 1.234
+  return Number(normalized);
 }
 
 export function isValidSsn(value: string): boolean {
-  return /^\d{3}-?\d{2}-?\d{4}$/.test(value);
+  return /^(?:\d-?){8,9}$/.test(value);
+}
+
+export function isValidAmount(value: string | number): boolean {
+  if (typeof value === "number") {
+    return Number.isFinite(value) && value >= 1 && value <= 10_000_000_000;
+  }
+
+  const normalized = value.trim();
+
+  if (!normalized) {
+    return false;
+  }
+
+  // Solo permite números, coma y punto
+  if (!/^[\d.,]+$/.test(normalized)) {
+    return false;
+  }
+
+  const lastComma = normalized.lastIndexOf(",");
+  const lastDot = normalized.lastIndexOf(".");
+
+  let amount: number;
+
+  // Ambos separadores
+  if (lastComma !== -1 && lastDot !== -1) {
+    if (lastComma > lastDot) {
+      // 1.234,99
+      amount = Number(
+        normalized.replace(/\./g, "").replace(",", ".")
+      );
+    } else {
+      // 1,234.99
+      amount = Number(
+        normalized.replace(/,/g, "")
+      );
+    }
+  }
+  // Solo coma
+  else if (lastComma !== -1) {
+    // 1234,99
+    amount = Number(normalized.replace(",", "."));
+  }
+  // Solo punto
+  else {
+    // 1234.99
+    amount = Number(normalized);
+  }
+
+  return (
+    Number.isFinite(amount) &&
+    amount >= 1 &&
+    amount <= 10_000_000_000
+  );
 }
 
 export async function submitLoan(request: LoanRequest): Promise<SubmitResult> {

@@ -1,8 +1,15 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatSsn, isValidSsn, submitLoan, US_STATES } from "@/lib/loan";
+import {
+  formatAmount,
+  formatSsn,
+  FormSubmitEvent,
+  isValidAmount,
+  isValidSsn,
+  submitLoan,  
+} from "@/lib/loan";
 
 type FormData = {
   firstName: string;
@@ -27,7 +34,9 @@ const emptyForm: FormData = {
 export default function LoanFormPage() {
   const router = useRouter();
   const [form, setForm] = useState<FormData>(emptyForm);
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>(
+    {},
+  );
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -43,20 +52,23 @@ export default function LoanFormPage() {
     if (!form.firstName.trim()) next.firstName = "El nombre es obligatorio.";
     if (!form.lastName.trim()) next.lastName = "El apellido es obligatorio.";
     if (!form.address.trim()) next.address = "La dirección es obligatoria.";
-    if (!form.state) next.state = "Selecciona un estado.";
-    if (!form.companyName.trim()) next.companyName = "La empresa es obligatoria.";
-    if (!form.amount || Number(form.amount) <= 0) {
-      next.amount = "Indica un monto mayor a cero.";
-    }
+    if (!form.state) next.state = "El estado es obligatorio.";
+    if (!form.companyName.trim())
+      next.companyName = "La empresa es obligatoria.";
+    const amount = formatAmount(form.amount);
+
+    if (!form.amount || !isValidAmount(form.amount) || amount <= 0) {
+      next.amount = "Indica un monto entre 1 y 10.000.000.000";
+    }   
     if (!form.ssn.trim() || !isValidSsn(form.ssn)) {
-      next.ssn = "El SSN debe tener 9 dígitos (p. ej. 123-45-6789).";
+      next.ssn = "El SSN debe tener entre 8 y 9 dígitos (p. ej. 123-45-6789).";
     }
 
     setErrors(next);
     return Object.keys(next).length === 0;
   }
 
-  async function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
     if (!validate()) return;
 
@@ -65,13 +77,13 @@ export default function LoanFormPage() {
 
     try {
       const result = await submitLoan({
-        firstName: form.firstName.trim(),
-        lastName: form.lastName.trim(),
-        address: form.address.trim(),
-        state: form.state,
-        companyName: form.companyName.trim(),
-        requestedAmount: Number(form.amount),
-        ssn: form.ssn,
+        firstName: form.firstName.trim().toUpperCase(),
+        lastName: form.lastName.trim().toUpperCase(),
+        address: form.address.trim().toUpperCase(),
+        state: form.state.trim().toUpperCase(),
+        companyName: form.companyName.trim().toUpperCase(),
+        requestedAmount: formatAmount(form.amount),
+        ssn: formatSsn(form.ssn),
       });
 
       if (result.status === "Approved") {
@@ -82,7 +94,9 @@ export default function LoanFormPage() {
         router.push(`/denied?reason=${encodeURIComponent(result.denialCode)}`);
       }
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "Ocurrió un error inesperado.");
+      setSubmitError(
+        error instanceof Error ? error.message : "Ocurrió un error inesperado.",
+      );
       setSubmitting(false);
     }
   }
@@ -114,8 +128,10 @@ export default function LoanFormPage() {
                 autoComplete="given-name"
                 value={form.firstName}
                 onChange={(e) => update("firstName", e.target.value)}
-                placeholder="Ana"
+                placeholder="John"
                 className={inputClass(!!errors.firstName)}
+                minLength={2}
+                maxLength={100}
               />
             </Field>
 
@@ -125,8 +141,10 @@ export default function LoanFormPage() {
                 autoComplete="family-name"
                 value={form.lastName}
                 onChange={(e) => update("lastName", e.target.value)}
-                placeholder="Gómez"
+                placeholder="Doe"
                 className={inputClass(!!errors.lastName)}
+                minLength={2}
+                maxLength={100}
               />
             </Field>
 
@@ -139,24 +157,25 @@ export default function LoanFormPage() {
                   onChange={(e) => update("address", e.target.value)}
                   placeholder="Calle, número, ciudad, código postal"
                   className={inputClass(!!errors.address)}
+                  minLength={2}
+                  maxLength={300}
                 />
               </Field>
             </div>
 
+            
             <Field label="Estado" error={errors.state}>
-              <select
+              <input
+                type="text"
+                autoComplete="state"
                 value={form.state}
                 onChange={(e) => update("state", e.target.value)}
+                placeholder="Buenos Aires"
                 className={inputClass(!!errors.state)}
-              >
-                <option value="">Selecciona un estado</option>
-                {US_STATES.map((state) => (
-                  <option key={state} value={state}>
-                    {state}
-                  </option>
-                ))}
-              </select>
-            </Field>
+                minLength={2}
+                maxLength={50}
+              />
+            </Field>          
 
             <Field label="Nombre de la empresa" error={errors.companyName}>
               <input
@@ -164,8 +183,10 @@ export default function LoanFormPage() {
                 autoComplete="organization"
                 value={form.companyName}
                 onChange={(e) => update("companyName", e.target.value)}
-                placeholder="Acme Inc."
+                placeholder="DJ Inc."
                 className={inputClass(!!errors.companyName)}
+                minLength={2}
+                maxLength={150}
               />
             </Field>
 
@@ -181,6 +202,8 @@ export default function LoanFormPage() {
                   onChange={(e) => update("amount", e.target.value)}
                   placeholder="10000"
                   className={inputClass(!!errors.amount, "pl-7")}
+                  minLength={1}
+                  maxLength={11}
                 />
               </div>
             </Field>
@@ -194,6 +217,8 @@ export default function LoanFormPage() {
                 onChange={(e) => update("ssn", formatSsn(e.target.value))}
                 placeholder="123-45-6789"
                 className={inputClass(!!errors.ssn)}
+                minLength={8}
+                maxLength={9}
               />
             </Field>
           </div>
@@ -217,7 +242,8 @@ export default function LoanFormPage() {
         </form>
 
         <p className="mt-4 text-center text-xs text-slate-400">
-          Demo: los SSN 111-11-1111 y 222-22-2222 están en la lista negra; NY está excluido.
+          Demo: los SSN 111-11-1111 y 222-22-2222 están en la lista negra; El
+          estado NY o Nueva York o New York está excluido.
         </p>
       </div>
     </main>
@@ -235,9 +261,13 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-slate-700">{label}</span>
+      <span className="mb-1.5 block text-sm font-medium text-slate-700">
+        {label}
+      </span>
       {children}
-      {error && <span className="mt-1 block text-sm text-red-600">{error}</span>}
+      {error && (
+        <span className="mt-1 block text-sm text-red-600">{error}</span>
+      )}
     </label>
   );
 }

@@ -19,18 +19,18 @@ public sealed class LoanRequestDto
 
     [Required]
     [StringLength(50, MinimumLength = 2)]
-    [RegularExpression(@"^[A-Za-z ]{2,50}$")]
+    [RegularExpression(@"^[\p{L} ]{2,50}$",ErrorMessage ="El estado solo puede contener letras y espacios.")]
     public string State { get; set; } = "";
 
     [Required]
     [StringLength(150)]
     public string CompanyName { get; set; } = "";
 
-    [Range(1, 10_000_000_000)]
+    [Range(1, 10_000_000_000, ErrorMessage ="El monto solicitado debe ser entre 1 y 10.000.000.000")]
     public decimal RequestedAmount { get; set; }
 
     [Required]
-    [RegularExpression(@"^\d{8,9}$", ErrorMessage = "El SSN debe tener entre 8 y 9 dígitos.")]
+    [RegularExpression(@"^\d{8,10}$", ErrorMessage = "El SSN debe tener entre 8 y 9 dígitos.")]
     public string Ssn { get; set; } = "";
 
     public LoanRequest ToRequest() => new(
