@@ -28,7 +28,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
-            var descriptor = services.Single(d => d.ServiceType == typeof(DbContextOptions<LoanDbContext>));
+            ServiceDescriptor descriptor = services.Single(d => d.ServiceType == typeof(DbContextOptions<LoanDbContext>));
             services.Remove(descriptor);
 
             services.AddDbContext<LoanDbContext>(options =>
@@ -47,7 +47,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     /// </summary>
     public async Task ResetDatabaseAsync()
     {
-        await using var db = CreateDbContext();
+        await using LoanDbContext db = CreateDbContext();
         db.OutboxMessages.RemoveRange(db.OutboxMessages);
         db.Applications.RemoveRange(db.Applications);
         db.Customers.RemoveRange(db.Customers);

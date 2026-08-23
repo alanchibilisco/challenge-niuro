@@ -16,12 +16,7 @@ public interface ILoanRepository
     /// <summary>
     /// Inserta o actualiza el cliente y la solicitud, y publica el evento outbox,
     /// todo en una única transacción: si algo falla, no queda nada persistido.
-    /// </summary>
-    // Task SaveAsync(
-    //     Customer customer,
-    //     LoanApplication application,
-    //     string outboxPayload,
-    //     CancellationToken cancellationToken);
+    /// </summary> 
     Task<(Customer customer, LoanApplication application)> SaveAsync(
         Customer customer,
         LoanApplication application,

@@ -9,6 +9,14 @@ public sealed class NyStateRule : ILoanDenialRule
 
     public string Reason => "No se pueden procesar solicitudes desde el estado de Nueva York (NY).";
 
+    private static readonly HashSet<string> NewYorkValues =
+    new(StringComparer.OrdinalIgnoreCase)
+    {
+        "NY",
+        "Nueva York",
+        "New York"
+    };
+
     public bool AppliesTo(LoanRequest request) =>
-        request.State.Equals("NY", StringComparison.OrdinalIgnoreCase);
+      NewYorkValues.Contains(request.State);
 }

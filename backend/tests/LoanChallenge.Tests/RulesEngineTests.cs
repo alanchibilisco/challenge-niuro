@@ -11,10 +11,10 @@ public class RulesEngineTests
     [Fact]
     public void Estado_NY_deniega_con_motivo_ny_state()
     {
-        var engine = CreateEngine([]);
-        var request = ValidRequest() with { State = "NY" };
+        LoanRulesEngine engine = CreateEngine([]);
+        LoanRequest request = ValidRequest() with { State = "NY" };
 
-        var decision = engine.Decide(request);
+        RuleDecision decision = engine.Decide(request);
 
         Assert.False(decision.IsApproved);
         Assert.Equal("ny_state", decision.DenialCode);
@@ -23,10 +23,10 @@ public class RulesEngineTests
     [Fact]
     public void Estado_NY_es_caso_insensible()
     {
-        var engine = CreateEngine([]);
-        var request = ValidRequest() with { State = "ny" };
+        LoanRulesEngine engine = CreateEngine([]);
+        LoanRequest request = ValidRequest() with { State = "ny" };
 
-        var decision = engine.Decide(request);
+        RuleDecision decision = engine.Decide(request);
 
         Assert.False(decision.IsApproved);
     }
@@ -34,10 +34,10 @@ public class RulesEngineTests
     [Fact]
     public void Ssn_en_lista_negra_deniega_con_motivo_ssn_blacklisted()
     {
-        var engine = CreateEngine(["111-11-1111"]);
-        var request = ValidRequest() with { Ssn = "111-11-1111" };
+        LoanRulesEngine engine = CreateEngine(["111-11-1111"]);
+        LoanRequest request = ValidRequest() with { Ssn = "111-11-1111" };
 
-        var decision = engine.Decide(request);
+        RuleDecision decision = engine.Decide(request);
 
         Assert.False(decision.IsApproved);
         Assert.Equal("ssn_blacklisted", decision.DenialCode);
@@ -46,10 +46,10 @@ public class RulesEngineTests
     [Fact]
     public void Ssn_blacklisted_con_formato_sin_guiones_tambien_deniega()
     {
-        var engine = CreateEngine(["111111111"]);
-        var request = ValidRequest() with { Ssn = "111-11-1111" };
+        LoanRulesEngine engine = CreateEngine(["111111111"]);
+        LoanRequest request = ValidRequest() with { Ssn = "111-11-1111" };
 
-        var decision = engine.Decide(request);
+        RuleDecision decision = engine.Decide(request);
 
         Assert.False(decision.IsApproved);
     }
@@ -57,10 +57,10 @@ public class RulesEngineTests
     [Fact]
     public void Solicitud_valida_se_aprueba()
     {
-        var engine = CreateEngine(["999999999"]);
-        var request = ValidRequest() with { Ssn = "123-45-6789", State = "CA" };
+        LoanRulesEngine engine = CreateEngine(["999999999"]);
+        LoanRequest request = ValidRequest() with { Ssn = "123-45-6789", State = "CA" };
 
-        var decision = engine.Decide(request);
+        RuleDecision decision = engine.Decide(request);
 
         Assert.True(decision.IsApproved);
         Assert.Null(decision.DenialCode);
