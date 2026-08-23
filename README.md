@@ -1,6 +1,6 @@
 # Challenge Full-Stack: flujo de solicitud de préstamo (.NET + Next.js)
 
-> **Vídeo demo:** _[enlace público pendiente — Loom / Jam / grabación de pantalla]_
+> **Vídeo demo:** _[https://www.loom.com/share/644b710ec563491b94afd18f7a0bbaf1]_
 
 Implementación del challenge "Prueba para realizar en casa: Ingeniero Full-Stack (.NET + Next.js)".
 
