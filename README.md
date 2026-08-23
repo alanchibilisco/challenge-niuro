@@ -88,4 +88,3 @@ La arquitectura y las decisiones de diseño están documentadas en **[ARCHITECTU
 
 - **Sin autenticación** (no requerida por el enunciado).
 - **Sin Docker / CI** (se ejecuta con 3 comandos; SQLite no necesita contenedor).
-- **Vídeo demo pendiente**: grabar con Loom o similar y reemplazar el enlace de arriba.
